@@ -1,0 +1,165 @@
+	Installing Linux on the Chromebook Pixel.
+
+These directions are provided AS-IS, if you lose all of your data or
+brick your machine, it's not my problem.
+
+Quick pre-requisites:
+
+A) You should (optionally) have a USB mouse you can plug into the
+   Pixel for when you first boot into Linux as the touchpad and
+   touchscreen won't work at the beginning.
+
+   You can forego this bit and work from the VC console instead
+   while performing the steps to get the touchpap/touchscreen
+   operational but you'll need to get wireless up so you can
+   install some packages over the network so keep that in mind.
+
+B) You need to have a USB device (or Android phone, see below)
+   to boot from, and a way to get a Debian ISO image onto it.
+
+C) REALIZE that this will blow away Chrome OS from your drive.
+   It's easy to restore the machine with Chroms OS again using
+   one of the restore images found at:
+
+   http://support.google.com/chromeos/bin/answer.py?hl=en&answer=1080595
+
+With that out of the way, here is what you do:
+
+1) Put your Pixel into developer mode, you should really do this
+   as the first thing when you use the laptop for the first time.
+
+   Hold down "ESC" and "Refresh" at the same time while powering
+   on the machine.  BTW, those keys on the top row after ESC are
+   just F1, F2, F3, etc.  The F3 one is the "Refresh" key I
+   mentioned.
+
+   Hit Ctrl-D then Enter.  It's going to take 5 minutes now
+   as it's going to wipe the entire stateful (ie. user data)
+   partition.
+
+   From this point forward, every time you boot, it's going to say
+   that Chrome OS can't be found or something similarly alarming like
+   that, just ignore and hit Ctr-D or wait 30 seconds to boot into
+   Chrome OS.  But that won't be relevant for long as we're going
+   to wipe it off the machine below :-)
+
+2) Boot into Chrome OS and configure it enough so that you can
+   login.  Start a shell:
+
+   a) Hit Ctrl-Alt-T, this brings up the chrosh window, from crosh
+      you can do things like spawn a shell, use SSH, etc. type "help"
+      if you're interested in more.
+   b) Give it the "shell" command.
+   c) Get root, "sudo bash"
+
+3) Configure it so that we can boot into Linux images via SeaBIOS
+   and boot from USB devices.
+
+   crossystem dev_boot_usb=1 dev_boot_legacy=1
+
+   and then power off the machine.
+
+4) Get yourself a Debian 7 image, I used:
+
+	http://cdimage.debian.org/cdimage/wheezy_di_rc1/amd64/iso-cd/debian-wheezy-DI-rc1-amd64-netinst.iso
+
+5) Put that image onto something you can USB boot.  You can use a USB
+   stick, but I've been using the DroidDrive app on my Galaxy Nexus
+   and Nexus 7.
+
+6) Plug the USB image in, and power on the Pixel.  When the boot
+   screen appears hit Ctrl-L, SeaBIOS will come up and say "Hit ESC to
+   choose boot device" so hit ESC and choose the USB device you
+   plugged in.
+
+7) Highlight the "Install" choice and hit TAB, add "mem=4G" to the
+   kernel command line.
+
+8) Do an install, tell the partitioner to use the entire SSD drive and
+   do things automatically.  I'd recommend enabling the installation
+   of the desktop packages so that it's easier to configure wireless.
+
+   Tell the installer to use the MBR of the entire disk for the boot
+   loader.
+
+9) After the install finishes the reboot will bring you to the
+   boot screen again, hit Ctrl-L to get into SeaBIOS and then ESC
+   but this time select the interal SSD drive.  It should boot up
+   just fine.
+
+10) Outside of the touchpad/touchscreen everything should work fine.
+    You do have a USB mouse to use for this part right?  Plug it in,
+    your life will be simplified.  Alternatively "Ctrl-Alt-F1" to get
+    into a VC and just do all of your work from there.  You have to
+    bring the wireless up somehow so you can install packages, and
+    it's just so much easier to do that from the graphical desktop.
+
+    Anyways, let's get the input devices working.  Install 'git' with:
+
+	apt-get install git
+
+    as root.  You'll also need the kernel headers package installed
+    in order to build kernel modules, for this install this package
+    should be "linux-headers-3.2.0-4-amd64"
+
+	apt-get install linux-headers-3.2.0-4-amd64
+
+    You'll also have to make sure you have the necessary tools to
+    compile things.  A safe way to ensure this is to install the
+    tools necessary to build the debian kernel package, like this:
+
+	apt-get build-dep linux
+
+    And you should be good to go.
+
+11) Clone my chomebook Pixel driver repo:
+
+	git clone http://git.kernel.org/pub/scm/linux/kernel/git/davem/chromebook_pixel.git
+
+    You might even have the repo already and be reading this text file
+    from it.  :-)
+
+    Now build:
+
+	cd chromebook_pixel
+	make
+
+    this will leave you with "chromebook_laptop.ko" and "atmel_mxt_ts.ko"
+
+    The chomebook_laptop.ko driver will instantiate the I2C devices hanging
+    off of the i915 graphics device, these will then be seen by drivers like
+    atmel_mxt_ts.ko which will talk over I2C to drive your touchpad and
+    touchscreen.
+
+    The chromebook_laptop.ko doesn't exist in any form in the debian
+    kernel package you have installed on this machine, but the
+    atmel_mxt_ts.ko does exist there but we need this newer version of it.
+    So just keep that in mind.
+
+12) Right now you can load these modules to see your input devices working.
+
+	insmod atmel_mxt_ts.ko
+	insmod chromebook_laptop.ko
+
+    But you're going to want this to happen automatically when you boot up.
+    I was super lazy and just copied the modules down under:
+
+	/lib/modules/3.2.0-4-amd64/kernel/
+
+    specifically to:
+
+	/lib/modules/3.2.0-4-amd64/kernel/drivers/input/touchscreen/atmel_mxt_ts.ko
+	/lib/modules/3.2.0-4-amd64/kernel/drivers/platform/x86/chromeos_laptop.ko
+
+    and then I added one line saying:
+
+	chromeos_laptop
+
+    to /etc/modules
+
+13) So you should have a fully functioning Chromebook Pixel running
+    Linux at this point.  Enjoy.
+
+    Every time you boot up you'll need to do that Ctrl-L song and
+    dance, since unfortunately you can't make SeaBIOS the default
+    30-sec timeout selection.  Just deal with it.
