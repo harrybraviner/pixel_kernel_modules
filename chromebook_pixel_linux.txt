@@ -64,7 +64,7 @@ With that out of the way, here is what you do:
 	http://cdimage.debian.org/cdimage/wheezy_di_rc1/amd64/iso-cd/debian-wheezy-DI-rc1-amd64-netinst.iso
 
 5) Put that image onto something you can USB boot.  You can use a USB
-   stick, but I've been using the DroidDrive app on my Galaxy Nexus
+   stick, but I've been using the DriveDroid app on my Galaxy Nexus
    and Nexus 7.
 
 6) Plug the USB image in, and power on the Pixel.  When the boot
