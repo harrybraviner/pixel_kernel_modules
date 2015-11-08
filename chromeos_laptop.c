@@ -22,6 +22,7 @@
 
 #include <linux/dmi.h>
 #include <linux/i2c.h>
+#include <linux/input.h>
 #include <linux/i2c/atmel_mxt_ts.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>
@@ -112,15 +113,18 @@ static const u8 atmel_224e_tp_config_data[] = {
 	0x00, 0x00, 0x00, 0x00
 };
 
+static int mxt_t19_keys[] = {
+	KEY_RESERVED,
+	KEY_RESERVED,
+	KEY_RESERVED,
+	KEY_RESERVED,
+	KEY_RESERVED,
+	BTN_LEFT
+};
+
 static struct mxt_platform_data atmel_224e_tp_platform_data = {
-	.x_line			= 18,
-	.y_line			= 12,
-	.x_size			= 102*20,
-	.y_size			= 68*20,
-	.blen			= 0x20,	/* Gain setting is in upper 4 bits */
-	.threshold		= 0x19,
-	.voltage		= 0,	/* 3.3V */
-	.orient			= MXT_HORIZONTAL_FLIP,
+	.t19_keymap		= mxt_t19_keys,
+	.t19_num_keys		= ARRAY_SIZE(mxt_t19_keys),
 	.irqflags		= IRQF_TRIGGER_FALLING,
 	.config			= atmel_224e_tp_config_data,
 	.config_length		= sizeof(atmel_224e_tp_config_data),
