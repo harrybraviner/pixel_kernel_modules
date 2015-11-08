@@ -19,11 +19,21 @@
 #include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/i2c.h>
-#include <linux/i2c/atmel_mxt_ts.h>
+//#include <linux/i2c/atmel_mxt_ts.h>
+#include "atmel_mxt_ts.h"
 #include <linux/input/mt.h>
 #include <linux/interrupt.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>
+
+// Definitions that were removed from the 3.16 kernel for some reason
+#define __devinit        __section(.devinit.text) __cold notrace
+#define __devexit        __section(.devexit.text) __exitused __cold notrace
+#if defined(MODULE) || defined(CONFIG_HOTPLUG)
+#define __devexit_p(x) x
+#else
+#define __devexit_p(x) NULL
+#endif
 
 /* Version */
 #define MXT_VER_20		20
@@ -933,7 +943,7 @@ static int mxt_enter_bl(struct mxt_data *data)
 	else
 		client->addr = MXT_BOOT_HIGH;
 
-	INIT_COMPLETION(data->bl_completion);
+	init_completion(&data->bl_completion);
 	enable_irq(data->irq);
 
 	/* Wait for CHG assert to indicate successful reset into bootloader */
@@ -2502,7 +2512,7 @@ static int mxt_input_dev_create(struct mxt_data *data)
 	input_abs_set_res(input_dev, ABS_Y, MXT_PIXELS_PER_MM);
 
 	/* For multi touch */
-	error = input_mt_init_slots(input_dev, MXT_MAX_FINGER);
+	error = input_mt_init_slots(input_dev, MXT_MAX_FINGER, 0);
 	if (error)
 		goto err_free_device;
 
@@ -2734,7 +2744,7 @@ static void mxt_suspend_enable_T9(struct mxt_data *data)
 	 * it will wake up the device immediately
 	 */
 	if (need_enable)
-		INIT_COMPLETION(data->auto_cal_completion);
+		init_completion(&data->auto_cal_completion);
 
 	/* Enable T9 object (ENABLE and REPORT) */
 	ret = mxt_set_regs(data, MXT_TOUCH_MULTI_T9, 0, 0,
